@@ -3,6 +3,25 @@ University of Gujrat • Hayyatian Computing Society
 
 A full-stack MERN application that allows users to upload, view, slide through, and delete images with permanent storage in MongoDB.
 
+## Screenshots
+
+### 1. Gallery Grid
+![Gallery Grid](./screenshots/grid.png)
+
+### 2. Upload Step
+![Upload Step](./screenshots/upload.png)
+
+### 3. Image Viewer (Modal)
+![Image Viewer](./screenshots/viewer.png)
+
+### 4. Slider / Navigation
+![Slider](./screenshots/slider.png)
+
+### 5. Delete Action
+![Delete Action](./screenshots/delete.png)
+
+---
+
 ## Technologies Used
 - **Frontend:** React, Vite, CSS
 - **Backend:** Node.js, Express.js
