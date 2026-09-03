@@ -1,92 +1,100 @@
 import { useRef, useState } from "react";
-
-export default function UploadForm({ onUploaded }) {
+export default function UploadForm({ onUpload, imageCount }) {
   const fileInputRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [tags, setTags] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
-
   function handleFileChange(e) {
     const file = e.target.files[0];
-    if (file) {
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
-      setError("");
-    }
+    setSelectedFile(file || null);
+    setError("");
   }
-
   async function handleUploadClick() {
     if (!selectedFile) {
-      setError("Please select an image first!");
+      setError("Please choose an image first.");
       return;
     }
-
+    if (!title.trim()) {
+      setError("Title is required.");
+      return;
+    }
     setIsUploading(true);
+    setProgress(0);
     setError("");
-
     try {
-      await onUploaded(selectedFile);
+      await onUpload({ file: selectedFile, title, description, tags }, setProgress);
       setSelectedFile(null);
-      setPreviewUrl(null);
+      setTitle("");
+      setDescription("");
+      setTags("");
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err) {
       setError(err?.response?.data?.message || "Upload failed. Please try again.");
     } finally {
       setIsUploading(false);
+      setProgress(0);
     }
   }
-
   return (
-    <div className="upload-glass-card">
-      {/* Upper Input Area */}
-      <div className="file-drop-zone">
+    <div className="upload-bar">
+      <div className="upload-row">
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/gif"
           onChange={handleFileChange}
-          id="file-upload"
-          className="hidden-input"
+          className="file-input"
+          disabled={isUploading}
         />
-        <label htmlFor="file-upload" className="file-label-btn">
-          Choose File
-        </label>
-        <span className="file-name-text">
-          {selectedFile ? selectedFile.name : "No file chosen"}
-        </span>
+        <span className="image-count">{imageCount} images in gallery</span>
       </div>
-
-      <button
-        className="neon-upload-btn"
-        onClick={handleUploadClick}
-        disabled={isUploading}
-      >
-        {isUploading ? "Uploading..." : "Upload Image"}
-      </button>
-
-      {/* Selected Preview Box */}
-      {selectedFile && previewUrl && (
-        <div className="selected-preview-card">
-          <div className="preview-img-wrapper">
-            <img src={previewUrl} alt="Selected preview" />
-          </div>
-          <div className="preview-details">
-            <h4>Selected preview</h4>
-            <p className="file-info-line">
-              {selectedFile.name} • {(selectedFile.size / 1024).toFixed(1)} KB • {selectedFile.type}
-            </p>
-            <div className="progress-bar-bg">
-              <div className={`progress-bar-fill ${isUploading ? "animating" : ""}`}></div>
-            </div>
-            <p className="status-msg">
-              {isUploading ? "Uploading to storage service..." : "Ready to upload"}
-            </p>
-          </div>
+      <div className="upload-row">
+        <input
+          type="text"
+          placeholder="Title (required)"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="text-input"
+          maxLength={80}
+          disabled={isUploading}
+        />
+        <input
+          type="text"
+          placeholder="Description (optional)"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="text-input"
+          maxLength={240}
+          disabled={isUploading}
+        />
+        <input
+          type="text"
+          placeholder="Tags, comma separated (max 5)"
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+          className="text-input"
+          disabled={isUploading}
+        />
+        <button className="upload-btn" onClick={handleUploadClick} disabled={isUploading}>
+          {isUploading ? `Uploading... ${progress}%` : "Upload"}
+        </button>
+      </div>
+      {isUploading && (
+        <div
+          className="progress-track"
+          role="progressbar"
+          aria-valuenow={progress}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <div className="progress-fill" style={{ width: `${progress}%` }} />
         </div>
       )}
-
-      {error && <p className="error-text">{error}</p>}
+      {error && <span className="upload-error">{error}</span>}
     </div>
   );
 }

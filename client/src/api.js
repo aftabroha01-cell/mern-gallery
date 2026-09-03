@@ -1,22 +1,37 @@
-import	axios	from	"axios";
-const	API_URL	=	import.meta.env.VITE_API_URL	||	"http://localhost:5000/api";
-//	GET	/api/images
-export	async	function	fetchImages()	{
-		const	res	=	await	axios.get(`${API_URL}/images`);
-		return	res.data;
+import axios from "axios";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+export async function fetchImages({ search = "", favorite = false, sort = "recent" } = {}) {
+  const params = {};
+  if (search.trim()) params.search = search.trim();
+  if (favorite) params.favorite = "true";
+  if (sort) params.sort = sort;
+  const res = await axios.get(`${API_URL}/images`, { params });
+  return res.data;
 }
-//	POST	/api/images		(multipart/form-data)
-export	async	function	uploadImage(file)	{
-		const	formData	=	new	FormData();
-		//	Field	name	must	match	upload.single("image")	on	the	server.
-		formData.append("image",	file);
-		const	res	=	await	axios.post(`${API_URL}/images`,	formData);
-		//	Note:	we	do	NOT	set	the	Content-Type	header	manually	—	the	browser
-		//	adds	multipart/form-data	with	the	correct	boundary	automatically.
-		return	res.data;
+export async function uploadImage({ file, title, description, tags }, onProgress) {
+  const formData = new FormData();
+  formData.append("image", file);
+  formData.append("title", title);
+  formData.append("description", description || "");
+  formData.append("tags", tags || "");
+  const res = await axios.post(`${API_URL}/images`, formData, {
+    onUploadProgress: (evt) => {
+      if (onProgress && evt.total) {
+        onProgress(Math.round((evt.loaded * 100) / evt.total));
+      }
+    },
+  });
+  return res.data;
 }
-//	DELETE	/api/images/:id
-export	async	function	deleteImage(id)	{
-		const	res	=	await	axios.delete(`${API_URL}/images/${id}`);
-		return	res.data;
+export async function updateImageMetadata(id, { title, description, tags }) {
+  const res = await axios.patch(`${API_URL}/images/${id}`, { title, description, tags });
+  return res.data;
+}
+export async function toggleFavorite(id, isFavorite) {
+  const res = await axios.patch(`${API_URL}/images/${id}/favorite`, { isFavorite });
+  return res.data;
+}
+export async function deleteImage(id) {
+  const res = await axios.delete(`${API_URL}/images/${id}`);
+  return res.data;
 }
